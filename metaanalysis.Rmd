@@ -1,0 +1,50 @@
+---
+title: "Метаанализ"
+output: html_notebook
+---
+
+```{r, markdown_settings, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE)
+```
+
+```{r, installing-libraries, include = FALSE}
+#install.packages(c("metafor", "clubSandwich"))
+```
+
+Загрузим данные:
+
+```{r, data-load}
+dataset <- read.csv("Метаанализ.csv", sep = ",")
+head(dataset, 5)
+```
+
+Проведём метаанализ:
+
+```{r, multilevel-model}
+library(metafor)
+
+fit <- rma.mv(
+	yi = computed.effect.size,
+	V = computed.standard.error^2,
+	data = dataset,
+	random = list(`Component 1` = ~1 | Автор/Мышца/Головка),
+	method = 'REML',
+	test = 't',
+	level = 95
+)
+
+fit <- robust(
+	fit,
+	cluster = Автор,
+	clubSandwich = TRUE,
+    adjust = TRUE
+)
+
+print(fit)
+```
+
+Построим лесной график:
+
+```{r, forest-plot}
+forest(fit)
+```
